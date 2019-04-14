@@ -26,5 +26,7 @@ def gmail_user_auth():
         print('認証結果を保存しました:' + USER_SECRET_FILE)
     return credentials
 
-# 認証実行
-gmail_user_auth()
+
+if __name__ == '__main__':
+  # 認証実行
+  gmail_user_auth()

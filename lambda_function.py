@@ -1,82 +1,53 @@
-import base64
-import chardet
-import email
+import json
 import os
-import re
-import sys
-import httplib2
-from apiclient import discovery
-import gmail_auth
+from gmail import Gmail
+from yamato import Yamato
+
+MAX_RESULTS = 10
 
 
-SEARCH_QUERY = 'from: mail@kuronekoyamato.co.jp AND (subject: お荷物お届けのお知らせ OR subject: 再配達依頼受付完了のお知らせ)'
-PATTERNS = {
-    'parcel_and_date': [
-      r"(.+) 様からのお荷物を　【(.+)】　にお届け予定です。",
-    ],
-    'date_only': [
-      r"(.+)にお届けに参りましたが、ご不在でしたので持ち帰りました。",
-      r"■ご希望日時　　　：(.+)",
-    ]
-}
+def generate_parcel_message(result):
+  message = ''
+  if result['name']:
+    message = '{0}だよ'.format(result['name'])
 
-def get_gmail_service():
-    # ユーザー認証の取得
-    credentials = gmail_auth.gmail_user_auth()
-    http = credentials.authorize(httplib2.Http())
-    # GmailのAPIを利用する
-    service = discovery.build('gmail', 'v1', http=http)
-    return service
+  if result['date']:
+    message = message + '\n日時: 　{0}'.format(result['date'])
 
+  if result['parcel']:
+    message = message + '\n発送元: {0}'.format(result['parcel'])
 
-def get_messages():
-    service = get_gmail_service()
+  return message
 
-    # メッセージの一覧を取得
-    messages = service.users().messages()
-    msg_list = messages.list(
-        userId='me',
-        maxResults=3,
-        q=_generate_query_from_yamato()
-    ).execute()
+def lambda_handler(event={}, context={}):
+  gmail = Gmail()
+  yamato = Yamato()
+  newer_than = os.environ['NEWER_THAN']
 
-    msgs = []
-    for msg in msg_list['messages']:
-        msg = messages.get(userId='me', id=msg['id'], format='raw').execute()
+  messages = gmail.get_messages(
+    maxResults=MAX_RESULTS,
+    query=yamato.SEARCH_QUERY,
+    newerThan=newer_than,
+  )
+  if not messages:
+    return {
+      'statusCode': 200,
+      'body': json.dumps('Not found yamato email in {0}'.format(newer_than))
+  }
 
-        raw_msg = base64.urlsafe_b64decode(msg['raw'])
-        email_msg = email.message_from_bytes(raw_msg)
-        msgs.append(email_msg.get_payload(decode=True).decode('iso-2022-jp'))
+  for message in messages:
+    parcel_info = yamato.get_parcel_and_date(message=message)
+    if not parcel_info['parcel'] and not parcel_info['date']:
+      print('Cannot obtain from messages!: {0}'.format(message))
+      continue
+    
+    print(generate_parcel_message(parcel_info))
 
-    return msgs
-
-def _generate_query_from_yamato():
-    return SEARCH_QUERY
+  return {
+    'statusCode': 200,
+    'body': json.dumps('Hello from Lambda!')
+  }
 
 
 if __name__ == '__main__':
-  patterns = {}
-  for key, part_of_patterns in PATTERNS.items():
-    patterns[key] = list(map(lambda v: re.compile(v), part_of_patterns))
-
-  # メッセージの取得を実行
-  messages = get_messages()
-  for message in messages:
-    result = {}
-    for pattern in patterns['parcel_and_date']:
-      match = pattern.search(message)
-      if match:
-        result['parcel'] = match.group(1)
-        result['date'] = match.group(2)
-        print('{0}: {1}'.format(match.group(1), match.group(2)))
-        break
-    if not result:
-        for pattern in patterns['date_only']:
-          match = pattern.search(message)
-          if match:
-            result['date'] = match.group(1)
-            print('{0}'.format(match.group(1)))
-            break
-    if not result:
-      print('No Info.')
-
+  lambda_handler()
