@@ -14,7 +14,7 @@ class Gmail:
     credentials = gmail_auth.gmail_user_auth()
     http = credentials.authorize(httplib2.Http())
     # GmailのAPIを利用する
-    service = discovery.build('gmail', 'v1', http=http)
+    service = discovery.build('gmail', 'v1', http=http, cache_discovery=False)
     return service
 
   def get_messages(self, maxResults=10, query='', newerThan='1h'):

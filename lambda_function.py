@@ -2,6 +2,7 @@ import json
 import os
 from gmail import Gmail
 from yamato import Yamato
+from linebot_publisher import LineBotPublisher
 
 MAX_RESULTS = 10
 
@@ -22,6 +23,7 @@ def generate_parcel_message(result):
 def lambda_handler(event={}, context={}):
   gmail = Gmail()
   yamato = Yamato()
+  publisher = LineBotPublisher()
   newer_than = os.environ['NEWER_THAN']
 
   messages = gmail.get_messages(
@@ -40,8 +42,11 @@ def lambda_handler(event={}, context={}):
     if not parcel_info['parcel'] and not parcel_info['date']:
       print('Cannot obtain from messages!: {0}'.format(message))
       continue
-    
-    print(generate_parcel_message(parcel_info))
+
+    publisher.post_text(
+      os.environ['LINE_BOT_TO_ID'],
+      generate_parcel_message(parcel_info)
+    )
 
   return {
     'statusCode': 200,

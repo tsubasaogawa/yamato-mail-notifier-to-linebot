@@ -2,7 +2,8 @@ import httplib2, os
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
-from oauth2client.file import Storage
+# from oauth2client.file import Storage
+from oauth2client.service_account import ServiceAccountCredentials
 
 
 # Gmail権限のスコープを指定
@@ -15,8 +16,12 @@ USER_SECRET_FILE = 'credentials-gmail.json'
 # ユーザー認証データの取得
 def gmail_user_auth():
     # ユーザーの認証データの読み取り
-    store = Storage(USER_SECRET_FILE)
-    credentials = store.get()
+    # store = Storage(USER_SECRET_FILE)
+    # credentials = store.get()
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+      'google_key.json',
+      scopes=SCOPES
+    )
     # ユーザーが認証済みか?
     if not credentials or credentials.invalid:
         # 新規で認証する
