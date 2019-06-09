@@ -2,7 +2,7 @@
 
 Post text from yamato mail to linebot.
 
-!(image)[https://raw.githubusercontent.com/tsubasaogawa/yamato-mail-notifier-to-linebot/images/image.png]
+![image](https://raw.githubusercontent.com/tsubasaogawa/yamato-mail-notifier-to-linebot/images/image.png)
 
 Now it can read the mail consisted of the following subject:
 
