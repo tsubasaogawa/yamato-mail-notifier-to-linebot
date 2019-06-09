@@ -1,6 +1,6 @@
 # yamato-mail-notifier-to-linebot
 
-Post text from yamato mail to linebot.
+Post text from mail sent by kuroneko yamato to linebot.
 
 ![image](https://raw.githubusercontent.com/tsubasaogawa/yamato-mail-notifier-to-linebot/images/image.png)
 
@@ -11,9 +11,14 @@ Now it can read the mail consisted of the following subject:
 
 ## Setup
 
+### Clone the repository
+
+:
+
 ### Enable GMail API and create client id
 
 Download client_id.json to `yamato-mail-notifier-to-linebot` directory.
+
 FYI: https://news.mynavi.jp/article/zeropython-22/
 
 ### Install libraries
@@ -39,7 +44,6 @@ aws s3 cp ../yamato-mail-notifier-to-linebot.zip 's3://your-s3-bucket-name/foo/b
 ```
 
 Create lambda function using uploaded one.
-You should create [lambda layer](https://github.com/tsubasaogawa/linebot-publisher-layer) separately to post to line bot.
 
 ### Set environment variables on your AWS management console
 
@@ -49,3 +53,7 @@ You should create [lambda layer](https://github.com/tsubasaogawa/linebot-publish
   - [user|room|group] ID that function posts to.
 - NEWER_THAN
   - Search mails sent within it. ex. `1h`
+
+### Create linebot-publisher-layer
+
+In order to post to line bot, you should create [lambda layer](https://github.com/tsubasaogawa/linebot-publisher-layer) separately.
